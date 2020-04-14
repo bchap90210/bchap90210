@@ -25,13 +25,13 @@ Duke,40000
 Coastal Carolina,20000
 Alabama,101821
 Fresno State,41031
-Louisiana,41426
+Louisiana-Lafayette,41426
 California,62717
 Wisconsin,80321
 Maryland,51802
 Louisville,61000
 Virginia,61500
-Southern Miss,36000
+Southern Mississippi,36000
 Syracuse,49250
 San Jose State,30456
 Arkansas State,30964
@@ -47,7 +47,7 @@ Missouri,71168
 Colorado,50183
 Arizona State,56232
 Clemson,81500
-Miami (OH),24286
+Miami (Ohio),24286
 Oklahoma,86112
 Georgia State,25000
 Southern Methodist,32000
@@ -96,7 +96,7 @@ Notre Dame,77622
 Ohio State,102780
 Auburn,87451
 Ohio,24000
-UConn,40000
+Connecticut,40000
 South Florida,65857
 Arkansas,80000
 Oregon State,45674
@@ -126,6 +126,6 @@ Vanderbilt,40350
 Mississippi,64038
 Troy,30402
 Western Michigan,30200
-UMass,17000
-NC State,57583
+Massachusetts,17000
+North Carolina State,57583
 South Carolina,80250
