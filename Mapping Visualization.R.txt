@@ -1,0 +1,122 @@
+# Step 1:  Load the Data
+#install.packages("readxl")
+#install.packages("zipcode")
+#install.packages("ggplot2")
+#install.packages("ggmap")
+#install.packages("maps")
+library(zipcode)
+## Warning: package 'zipcode' was built under R version 3.5.2
+library(readxl)
+## Warning: package 'readxl' was built under R version 3.5.3
+library(ggplot2)
+## Warning: package 'ggplot2' was built under R version 3.5.3
+library(ggmap)
+## Warning: package 'ggmap' was built under R version 3.5.3
+## Google's Terms of Service: https://cloud.google.com/maps-platform/terms/.
+## Please cite ggmap if you use it! See citation("ggmap") for details.
+library(maps)
+## Warning: package 'maps' was built under R version 3.5.3
+#Have had a lot of trouble with the map_data function but read it could be in 
+#conflict with other packages and it works when you run it first with a fresh
+#rstudio session so doing that now
+us <- map_data("state")
+HW_7_Dataset <- read_excel("HW 7 Dataset.xlsx")
+## New names:
+## * `` -> ...2
+## * `` -> ...3
+## * `` -> ...4
+zip <- HW_7_Dataset
+names(zip) <- c("Zip","Median","Mean", "Population")
+zip <- zip[-1,]
+zip$Median <- as.numeric(zip$Median)
+zip$Mean <- as.numeric(zip$Mean)
+## Warning: NAs introduced by coercion
+zip$Median <- ceiling(zip$Median)
+zip$Mean <- ceiling(zip$Mean)
+zip <- na.omit(zip)
+sum(is.na(zip))
+## [1] 0
+data("zipcode")
+data("zipcode.civicspace")
+#merging zipcode and zipcode.civispace data
+zipmerge <- merge(zipcode, zipcode.civicspace, by=c("zip", "city", "state", "latitude", "longitude"))
+sum(is.na(zipmerge))
+## [1] 0
+zipmerge <- zipmerge[!grepl("AK", zipmerge$state),]
+zipmerge <- zipmerge[!grepl("HI", zipmerge$state),]
+zipmerge <- zipmerge[!grepl("PR", zipmerge$state),]
+zipmerge <- zipmerge[!grepl("VI", zipmerge$state),]
+zipmerge <- zipmerge[!grepl("AS", zipmerge$state),]
+zipmerge <- zipmerge[!grepl("DC", zipmerge$state),]
+# Step 2:  Show the Income and Population per State
+library(ggplot2)
+library(ggmap)
+library(stringr)
+## Warning: package 'stringr' was built under R version 3.5.3
+require(maps)
+#Making a simpler dataframe per instructions
+zip.merge1 <- data.frame(zip$Zip, zip$Population, zip$Median, stringsAsFactors = FALSE) 
+names(zip.merge1) <- c("zip", "pop", "median")
+#zip.merge1$zip <- as.numeric(zip.merge1$zip)
+#adding leading 0s to any zips that have under only 4 digits
+zip.merge1$zip <- str_pad(zip.merge1$zip, width = 5, side = "left", pad = "0")
+#adding the state data from our merged zip file
+add.state <- data.frame(zipmerge$zip, zipmerge$state)
+names(add.state) <- c("zip", "state")
+#Have to clean up add.state so it will fit with our other dataframe
+add.state <- add.state[!grepl("PR", add.state$state),]
+add.state <- add.state[!grepl("VI", add.state$state),]
+add.state <- add.state[!grepl("AS", add.state$state),]
+add.state <- add.state[!grepl("DC", add.state$state),]
+add.state <- add.state[!grepl("AA", add.state$state),]
+add.state <- add.state[!grepl("AE", add.state$state),]
+#adding the state information from add.state
+zip.merge1 <- merge(zip.merge1, add.state, by=c("zip"))
+avg.med <- aggregate(zip.merge1$median ~ zip.merge1$state, FUN =  median)
+names(avg.med) <- c("states", "medIncome")
+avg.med$states <- tolower(avg.med$states)
+state.info <- data.frame(state.name)
+state.info <- state.info[-c(2, 11),]
+avg.med$state.info <- state.info
+avg.med$state.info <- tolower(avg.med$state.info)
+map <- ggplot(avg.med, aes(map_id = state.info))
+map <- map + geom_map(map = us, aes(fill =avg.med$medIncome))
+map <- map + expand_limits(x=us$long, y=us$lat)
+map <- map + coord_map() + ggtitle("average median income")
+map
+ 
+zip.merge1$pop <- as.numeric(zip.merge1$pop)
+zip.merge1$state <- gsub("\\.","",zip.merge1$state)
+avg.med$pop.byState <- aggregate(pop ~ state, zip.merge1, sum)
+plot.pop <- data.frame(avg.med$state.info, avg.med$pop.byState)
+plot.pop <- plot.pop[,-2]
+map.pop <- ggplot(avg.med, aes(map_id = plot.pop$avg.med.state.info))
+map.pop <- map.pop + geom_map(map = us, aes(fill =plot.pop$pop))
+map.pop <- map.pop + expand_limits(x=us$long, y=us$lat)
+map.pop <- map.pop + coord_map() + ggtitle("state population")
+map.pop
+ 
+library(ggplot2)
+library(ggmap)
+library(maps)
+library(zipcode)
+data("zipcode")
+plot.income <- data.frame(zip.merge1$zip, zip.merge1$median)
+names(plot.income) <- c("zip", "median")
+plot.income <- merge(plot.income, zipcode, by="zip")
+plot.zip <-aggregate(data.frame(abs=plot.income$median),list(zip=plot.income$zip,state=plot.income$state),length)
+plot.zip <- merge(plot.zip, zipcode, by="zip")
+plot.map <-ggplot(plot.zip,aes(longitude,latitude)) + geom_polygon(data=us,aes(x=long,y=lat,group=group),color='gray',fill=NA,alpha=.35)+
+  geom_point(aes(color = plot.zip$abs),size=.15,alpha=.25) + xlim(-125,-65)+ylim(20,50) 
+plot.map <- plot.map +coord_map() + ggtitle("Median Income")
+plot.map
+
+library(ggplot2)
+library(ggmap)
+library(maps)
+library(zipcode)
+zip.plot <- data.frame(plot.income$zip, plot.income$latitude, plot.income$longitude)
+zipcode.density <- ggplot() + geom_polygon(data=us, aes(x=long, y = lat, group=group), color="white", fill="grey") + coord_map() + expand_limits()
+zipcode.density <- zipcode.density + stat_density2d(data=zip.plot, aes(x=plot.income$longitude, y=plot.income$latitude),bins=50)
+zipcode.density
+
